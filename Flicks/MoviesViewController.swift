@@ -8,6 +8,7 @@
 
 import UIKit
 import AFNetworking
+import MBProgressHUD
 
 class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
@@ -19,17 +20,20 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        // Initialize a UIRefreshControl
+        let refreshControl = UIRefreshControl()
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
         networkRequest()
+        
+        
            }
     
     func networkRequest(){
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         print("@@@@@@" + endpoint)
-        let url = URL(string: "https://api.themoviedb.org/3/movie/\(endpoint)?api_key=\(apiKey)")
+        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
         print(url)
         let request = URLRequest(url: url!)
         let session = URLSession(
@@ -37,8 +41,13 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
             delegate:nil,
             delegateQueue:OperationQueue.main
         )
+        MBProgressHUD.showAdded(to: self.view, animated: true)
+        
         let task : URLSessionDataTask = session.dataTask(with: request,
                                                          completionHandler: {(dataOrNil, response, error) in
+                                                            
+                                                            MBProgressHUD.hide(for: self.view, animated: true)
+                                                            
                                                             if let data = dataOrNil {
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
