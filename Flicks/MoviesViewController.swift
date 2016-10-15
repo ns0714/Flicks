@@ -10,7 +10,7 @@ import UIKit
 import AFNetworking
 import MBProgressHUD
 
-class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
     
     
     @IBOutlet weak var tableView: UITableView!
@@ -18,14 +18,18 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     @IBOutlet weak var networkErrorView: UIView!
     
     var movies: [NSDictionary]?
+    var moviesArray: [NSDictionary]?
     var endpoint: String!
+    var searchActive : Bool = false
+    var filteredtitles: [String] = []
+    var titles: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
-        //searchBar.delegate = self
+        searchBar.delegate = self
         
         MBProgressHUD.showAdded(to: self.view, animated: true)
         networkRequest()
@@ -38,9 +42,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     
     func refreshControlAction(refreshControl: UIRefreshControl) {
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-        print("@@@@@@" + endpoint)
-        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
-        print(url)
+        let url = URL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
         let request = URLRequest(url: url!)
         let session = URLSession(
             configuration: URLSessionConfiguration.default,
@@ -58,9 +60,10 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
                                                                     NSLog("response: \(responseDictionary)")
-                                                                    print("response: \(responseDictionary)")
+                                                                    //print("response: \(responseDictionary)")
                                                                     
                                                                     self.movies = responseDictionary["results"] as? [NSDictionary]
+                                                                    self.moviesArray = self.movies;
                                                                     self.tableView.reloadData()
                                                                     DispatchQueue.main.async {
                                                                         MBProgressHUD.hide(for: self.view, animated: true)
@@ -73,16 +76,12 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                             refreshControl.endRefreshing()
         });
         task.resume()
-        
-
     }
     
     func networkRequest() {
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-        print("@@@@@@" + endpoint)
-        print("URL: " + "https://api.themoviedb.org/3/movie/\(endpoint)?api_key=\(apiKey)")
         let url = URL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
-        print(url)
+        //print(url)
         let request = URLRequest(url: url!)
         let session = URLSession(
             configuration: URLSessionConfiguration.default,
@@ -90,7 +89,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
             delegateQueue:OperationQueue.main
         )
        
-        
         let task : URLSessionDataTask = session.dataTask(with: request,
                                                          completionHandler: {(dataOrNil, response, error) in
                                                             if error != nil {
@@ -103,26 +101,34 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
                                                                     NSLog("response: \(responseDictionary)")
-                                                                    print("response: \(responseDictionary)")
+                                                                    //print("response: \(responseDictionary)")
                                                                     
                                                                     self.movies = responseDictionary["results"] as? [NSDictionary]
                                                                     self.tableView.reloadData()
+                                                                    self.moviesArray = self.movies;
+                                                                    if let titleArray = self.movies
+                                                                    {
+                                                                        for (item) in titleArray
+                                                                        {
+                                                                            let title: String! = item.object(forKey: "title") as! String
+                                                                            self.titles.append(title)
+                                                                        }
+                                                                    }
                                                                     DispatchQueue.main.async {
                                                                         MBProgressHUD.hide(for: self.view, animated: true)
                                                                     }
-                                                                    
                                                                 }
                                                             }
                                                             
         });
         task.resume()
-        
     }
     
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
         if let movies = movies{
             return movies.count
         }else {
+            print("DID I COME HEREEE")
             return 0;
         }
     }
@@ -147,7 +153,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         }
         return cell
     }
-    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -171,5 +176,68 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         detailViewController.movie = movie;
     }
     
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchActive = true;
+        movies = moviesArray
+        self.tableView.reloadData()
+    }
     
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchActive = false;
+        movies = moviesArray
+        self.tableView.reloadData()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchActive = false;
+        movies = moviesArray
+        self.tableView.reloadData()
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchActive = false;
+        movies = moviesArray
+        self.tableView.reloadData()
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        var filteredMovies: [NSDictionary] = []
+
+        //print("SEARCH TEXT %%%%%%%%%%%%%%%%" + searchText)
+        filteredtitles = titles.filter({ (text) -> Bool in
+            let tmp: NSString = text as NSString
+            let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
+            return range.location != NSNotFound
+        })
+        
+        let titleArray = self.movies
+        for (titleInFilteredData) in filteredtitles {
+            for (item) in titleArray!
+            {
+                let title: String = item.object(forKey: "title") as! String
+                //print("1273623524352 title " + title)
+                //print("************ titleInFilteredData " + titleInFilteredData)
+                if(title == titleInFilteredData){
+                    //print("TADAHHHHHHHHHHH These two strings are considered equal")
+                    filteredMovies.append(item)
+                }
+            }
+        }
+        
+        print("#########FILTERED MOVIES COUNTZ", filteredMovies.count)
+        
+        if(filteredMovies.count == 0){
+            searchActive = false;
+            print(self.moviesArray?.count)
+            
+            print(self.movies?.count)
+            self.movies! = self.moviesArray!
+            print("AFTER ASSIGNING ", self.movies?.count)
+        } else {
+            searchActive = true;
+            self.movies = filteredMovies
+        }
+        filteredMovies.removeAll()
+        self.tableView.reloadData()
+    }
 }
