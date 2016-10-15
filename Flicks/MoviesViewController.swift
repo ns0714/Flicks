@@ -15,6 +15,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var networkErrorView: UIView!
     
     var movies: [NSDictionary]?
     var endpoint: String!
@@ -88,13 +89,16 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
             delegate:nil,
             delegateQueue:OperationQueue.main
         )
-        //MBProgressHUD.showAdded(to: self.view, animated: true)
+       
         
         let task : URLSessionDataTask = session.dataTask(with: request,
                                                          completionHandler: {(dataOrNil, response, error) in
-                                                            
-                                                            //MBProgressHUD.hide(for: self.view, animated: true)
-                                                            
+                                                            if error != nil {
+                                                                    self.networkErrorView.isHidden = false
+                                                                    DispatchQueue.main.async {
+                                                                        MBProgressHUD.hide(for: self.view, animated: true)
+                                                                }
+                                                            }else
                                                             if let data = dataOrNil {
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
@@ -109,6 +113,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                                     
                                                                 }
                                                             }
+                                                            
         });
         task.resume()
         

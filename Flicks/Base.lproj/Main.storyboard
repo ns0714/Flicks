@@ -63,11 +63,26 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
+                            <view hidden="YES" alpha="0.90000000000000002" contentMode="scaleToFill" misplaced="YES" id="TAY-Lc-bjM">
+                                <frame key="frameInset" minY="65" width="375" height="44"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Network Error" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="dRF-xa-Xtf">
+                                        <frame key="frameInset" minX="121" minY="15" width="157" height="21"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="1" green="0.16066989649997154" blue="0.2237069555607466" alpha="1" colorSpace="calibratedRGB"/>
                     </view>
                     <navigationItem key="navigationItem" id="jXz-2T-Lge"/>
                     <connections>
+                        <outlet property="networkErrorView" destination="TAY-Lc-bjM" id="AEt-a9-5iS"/>
                         <outlet property="searchBar" destination="NGk-de-O9F" id="ueR-ZC-csd"/>
                         <outlet property="tableView" destination="baz-bV-JdH" id="Agl-D9-DnF"/>
                     </connections>
