@@ -22,6 +22,8 @@ Optional
 - [x] Customize the highlight and selection effect of the cell.
 - [x] Customize the navigation bar.
 
+
 Gif Image
+
 ![Alt Text](flicks1.gif)
 ![Alt Text](nonetwork.gif)
