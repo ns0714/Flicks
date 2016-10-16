@@ -20,6 +20,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         
+        UITabBar.appearance().tintColor = UIColor.black
+        
         let nowPlayingNavigationController =  storyboard.instantiateViewController(withIdentifier: "MoviesNagivationController") as! UINavigationController
         let nowPlayingViewController = nowPlayingNavigationController.topViewController as! MoviesViewController
         nowPlayingViewController.endpoint = "now_playing"
