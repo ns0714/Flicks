@@ -26,11 +26,15 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        
         tableView.dataSource = self
         tableView.delegate = self
         searchBar.delegate = self
         
+        self.navigationItem.title = "Flicks"
+        
+        //searchBar.
+        MBProgressHUD.appearance().tintColor = UIColor.white
         MBProgressHUD.showAdded(to: self.view, animated: true)
         networkRequest()
         
@@ -49,18 +53,14 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
             delegate:nil,
             delegateQueue:OperationQueue.main
         )
-        //MBProgressHUD.showAdded(to: self.view, animated: true)
         
         let task : URLSessionDataTask = session.dataTask(with: request,
                                                          completionHandler: {(dataOrNil, response, error) in
-                                                            
-                                                            //MBProgressHUD.hide(for: self.view, animated: true)
                                                             
                                                             if let data = dataOrNil {
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
                                                                     NSLog("response: \(responseDictionary)")
-                                                                    //print("response: \(responseDictionary)")
                                                                     
                                                                     self.movies = responseDictionary["results"] as? [NSDictionary]
                                                                     self.moviesArray = self.movies;
@@ -71,8 +71,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                                 }
                                                             }
                                                             self.tableView.reloadData()
-                                                            
-                                                            // Tell the refreshControl to stop spinning
                                                             refreshControl.endRefreshing()
         });
         task.resume()
@@ -81,7 +79,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     func networkRequest() {
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         let url = URL(string: "https://api.themoviedb.org/3/movie/\(endpoint!)?api_key=\(apiKey)")
-        //print(url)
         let request = URLRequest(url: url!)
         let session = URLSession(
             configuration: URLSessionConfiguration.default,
@@ -101,7 +98,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                                                                 if let responseDictionary = try! JSONSerialization.jsonObject(
                                                                     with: data, options:[]) as? NSDictionary {
                                                                     NSLog("response: \(responseDictionary)")
-                                                                    //print("response: \(responseDictionary)")
                                                                     
                                                                     self.movies = responseDictionary["results"] as? [NSDictionary]
                                                                     self.tableView.reloadData()
@@ -125,15 +121,14 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
-        if let movies = movies{
+        if let movies = movies {
             return movies.count
         }else {
-            print("DID I COME HEREEE")
             return 0;
         }
     }
     
-    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
         cell.selectionStyle = .none
         let movie = movies![indexPath.row]
@@ -142,27 +137,69 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         
         let overview = movie["overview"] as! String
         cell.overviewLabel!.text = overview
-        //cell.overviewLabel.font.pointSize(10)
         cell.overviewLabel.sizeToFit()
         
-        let baseUrl = "https://image.tmdb.org/t/p/w500"
+        let baseSmallUrl = "https://image.tmdb.org/t/p/w45"
+        let baseLargeUrl = "https://image.tmdb.org/t/p/w500"
         
         if let posterPath = movie["poster_path"] as? String {
-            let imageUrl = URL(string: baseUrl + posterPath)
-            cell.posterView.setImageWith(imageUrl!)
+            let imageLargeUrl = baseLargeUrl + posterPath
+            let imageSmallUrl = baseSmallUrl + posterPath
+            let imageSmallRequest = NSURLRequest(url: NSURL(string: imageSmallUrl)! as URL)
+            let imageLargeRequest = NSURLRequest(url: NSURL(string: imageLargeUrl)! as URL)
+        
+            cell.posterView.setImageWith(
+            imageSmallRequest as URLRequest,
+            placeholderImage: nil,
+            success: { (smallImageRequest, smallImageResponse, smallImage) -> Void in
+                
+                // smallImageResponse will be nil if the smallImage is already available
+                // in cache (might want to do something smarter in that case).
+                cell.posterView.alpha = 0.0
+                cell.posterView.image = smallImage;
+                
+                UIView.animate(withDuration: 0.3, animations: { () -> Void in
+                    
+                    cell.posterView.alpha = 1.0
+                    
+                    }, completion: { (sucess) -> Void in
+            
+                            cell.posterView.setImageWith(
+                            imageLargeRequest as URLRequest,
+                            placeholderImage: nil,
+                            success: { (imageLargeRequest, imageLargeResponse, largeImage) -> Void in
+                
+                                // imageResponse will be nil if the image is cached
+                                if imageLargeResponse != nil {
+                                    print("Image was NOT cached, fade in image")
+                                    cell.posterView.alpha = 0.0
+                                    cell.posterView.image = largeImage
+                                    UIView.animate(withDuration: 0.3, animations: { () -> Void in
+                                        cell.posterView.alpha = 1.0
+                                    })
+                                }
+                                else {
+                                    print("Image was cached so just update the image")
+                                    cell.posterView.image = largeImage
+                                }
+                                },
+                            failure: { (imageRequest, imageResponse, error) -> Void in
+                                
+                            })
+                    })
+                },
+            failure: { (request, response, error) -> Void in
+               
+            })
         }
-        return cell
+            return cell
     }
+        
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
     
-    
-    
-    // MARK: - Navigation
-    
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
@@ -202,8 +239,6 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         var filteredMovies: [NSDictionary] = []
-
-        //print("SEARCH TEXT %%%%%%%%%%%%%%%%" + searchText)
         filteredtitles = titles.filter({ (text) -> Bool in
             let tmp: NSString = text as NSString
             let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
@@ -212,27 +247,17 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         
         let titleArray = self.movies
         for (titleInFilteredData) in filteredtitles {
-            for (item) in titleArray!
-            {
+            for (item) in titleArray! {
                 let title: String = item.object(forKey: "title") as! String
-                //print("1273623524352 title " + title)
-                //print("************ titleInFilteredData " + titleInFilteredData)
-                if(title == titleInFilteredData){
-                    //print("TADAHHHHHHHHHHH These two strings are considered equal")
+                if(title == titleInFilteredData) {
                     filteredMovies.append(item)
                 }
             }
         }
         
-        print("#########FILTERED MOVIES COUNTZ", filteredMovies.count)
-        
-        if(filteredMovies.count == 0){
+        if(filteredMovies.count == 0) {
             searchActive = false;
-            print(self.moviesArray?.count)
-            
-            print(self.movies?.count)
             self.movies! = self.moviesArray!
-            print("AFTER ASSIGNING ", self.movies?.count)
         } else {
             searchActive = true;
             self.movies = filteredMovies
