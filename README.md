@@ -2,16 +2,16 @@
 
 iOS codepath homework 1
 
-Time spent: 
+Time spent: 10 hours
 
 Completed user stories:
 
 Required
 - [x] User can view a list of movies currently playing in theaters from The Movie Database. Poster images must be loaded asynchronously.
 - [x] User can view movie details by tapping on a cell.
-- [x]  User sees loading state while waiting for movies API
-- [x]  User sees an error message when there's a networking error. 
-- [x]  User can pull to refresh the movie list.
+- [x] User sees loading state while waiting for movies API
+- [x] User sees an error message when there's a networking error. 
+- [x] User can pull to refresh the movie list.
 
 Optional
 
@@ -23,4 +23,5 @@ Optional
 - [x] Customize the navigation bar.
 
 Gif Image
-![Alt Text]()
+![Alt Text](flicks1.gif)
+![Alt Text](nonetwork.gif)
